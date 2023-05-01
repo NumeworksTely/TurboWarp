@@ -1155,4 +1155,5 @@
     a
   }();
   a.default = E
+Scratch.extensions.register(new Google());
 });
