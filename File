@@ -1,531 +1,1158 @@
-(function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
-  typeof define === 'function' && define.amd ? define(['exports'], factory) :
-  (factory((global.WHATWGFetch = {})));
-}(this, (function (exports) { 'use strict';
-
-  var support = {
-    searchParams: 'URLSearchParams' in self,
-    iterable: 'Symbol' in self && 'iterator' in Symbol,
-    blob:
-      'FileReader' in self &&
-      'Blob' in self &&
-      (function() {
-        try {
-          new Blob();
-          return true
-        } catch (e) {
-          return false
-        }
-      })(),
-    formData: 'FormData' in self,
-    arrayBuffer: 'ArrayBuffer' in self
-  };
-
-  function isDataView(obj) {
-    return obj && DataView.prototype.isPrototypeOf(obj)
-  }
-
-  if (support.arrayBuffer) {
-    var viewClasses = [
-      '[object Int8Array]',
-      '[object Uint8Array]',
-      '[object Uint8ClampedArray]',
-      '[object Int16Array]',
-      '[object Uint16Array]',
-      '[object Int32Array]',
-      '[object Uint32Array]',
-      '[object Float32Array]',
-      '[object Float64Array]'
-    ];
-
-    var isArrayBufferView =
-      ArrayBuffer.isView ||
-      function(obj) {
-        return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
-      };
-  }
-
-  function normalizeName(name) {
-    if (typeof name !== 'string') {
-      name = String(name);
-    }
-    if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
-      throw new TypeError('Invalid character in header field name')
-    }
-    return name.toLowerCase()
-  }
-
-  function normalizeValue(value) {
-    if (typeof value !== 'string') {
-      value = String(value);
-    }
-    return value
-  }
-
-  // Build a destructive iterator for the value list
-  function iteratorFor(items) {
-    var iterator = {
-      next: function() {
-        var value = items.shift();
-        return {done: value === undefined, value: value}
+(function (a, b) {
+  if ('function' == typeof define && define.amd) define(['exports'], b);
+   else if ('undefined' != typeof exports) b(exports);
+   else {
+    var c = {
+      exports: {
       }
     };
-
-    if (support.iterable) {
-      iterator[Symbol.iterator] = function() {
-        return iterator
-      };
-    }
-
-    return iterator
+    b(c.exports),
+    a.unknown = c.exports
   }
-
-  function Headers(headers) {
-    this.map = {};
-
-    if (headers instanceof Headers) {
-      headers.forEach(function(value, name) {
-        this.append(name, value);
-      }, this);
-    } else if (Array.isArray(headers)) {
-      headers.forEach(function(header) {
-        this.append(header[0], header[1]);
-      }, this);
-    } else if (headers) {
-      Object.getOwnPropertyNames(headers).forEach(function(name) {
-        this.append(name, headers[name]);
-      }, this);
+}) (this, function (a) {
+  'use strict';
+  function b(a, b) {
+    if (!k(a, b)) throw new TypeError('Cannot call a class as a function')
+  }
+  function c(a, b) {
+    for (var c, d = 0; d < b.length; d++) c = b[d],
+    c.enumerable = c.enumerable || !1,
+    c.configurable = !0,
+    'value' in c && (c.writable = !0),
+    Object.defineProperty(a, c.key, c)
+  }
+  function d(a, b, d) {
+    return b && c(a.prototype, b),
+    d && c(a, d),
+    a
+  }
+  function e(a) {
+    return h(a) || g(a) || f()
+  }
+  function f() {
+    throw new TypeError('Invalid attempt to spread non-iterable instance')
+  }
+  function g(a) {
+    if (Symbol.iterator in Object(a) || '[object Arguments]' === Object.prototype.toString.call(a)) return Array.from(a)
+  }
+  function h(a) {
+    if (Array.isArray(a)) {
+      for (var b = 0, c = Array(a.length); b < a.length; b++) c[b] = a[b];
+      return c
     }
   }
-
-  Headers.prototype.append = function(name, value) {
-    name = normalizeName(name);
-    value = normalizeValue(value);
-    var oldValue = this.map[name];
-    this.map[name] = oldValue ? oldValue + ', ' + value : value;
-  };
-
-  Headers.prototype['delete'] = function(name) {
-    delete this.map[normalizeName(name)];
-  };
-
-  Headers.prototype.get = function(name) {
-    name = normalizeName(name);
-    return this.has(name) ? this.map[name] : null
-  };
-
-  Headers.prototype.has = function(name) {
-    return this.map.hasOwnProperty(normalizeName(name))
-  };
-
-  Headers.prototype.set = function(name, value) {
-    this.map[normalizeName(name)] = normalizeValue(value);
-  };
-
-  Headers.prototype.forEach = function(callback, thisArg) {
-    for (var name in this.map) {
-      if (this.map.hasOwnProperty(name)) {
-        callback.call(thisArg, this.map[name], name, this);
-      }
+  function i(a, b, c, d, e, f, g) {
+    try {
+      var h = a[f](g),
+      i = h.value
+    } catch (a) {
+      return void c(a)
     }
-  };
-
-  Headers.prototype.keys = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push(name);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.values = function() {
-    var items = [];
-    this.forEach(function(value) {
-      items.push(value);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.entries = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push([name, value]);
-    });
-    return iteratorFor(items)
-  };
-
-  if (support.iterable) {
-    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;
+    h.done ? b(i) : Promise.resolve(i).then(d, e)
   }
-
-  function consumed(body) {
-    if (body.bodyUsed) {
-      return Promise.reject(new TypeError('Already read'))
+  function j(a) {
+    return function () {
+      var b = this,
+      c = arguments;
+      return new Promise(function (d, e) {
+        function f(a) {
+          i(h, d, e, f, g, 'next', a)
+        }
+        function g(a) {
+          i(h, d, e, f, g, 'throw', a)
+        }
+        var h = a.apply(b, c);
+        f(void 0)
+      })
     }
-    body.bodyUsed = true;
   }
-
-  function fileReaderReady(reader) {
-    return new Promise(function(resolve, reject) {
-      reader.onload = function() {
-        resolve(reader.result);
-      };
-      reader.onerror = function() {
-        reject(reader.error);
-      };
+  function k(a, b) {
+    return null != b && 'undefined' != typeof Symbol && b[Symbol.hasInstance] ? b[Symbol.hasInstance](a) : a instanceof b
+  }
+  function l(a) {
+    return l = 'function' == typeof Symbol && 'symbol' == typeof Symbol.iterator ? function (a) {
+      return typeof a
+    }
+     : function (a) {
+      return a && 'function' == typeof Symbol && a.constructor === Symbol && a !== Symbol.prototype ? 'symbol' : typeof a
+    },
+    l(a)
+  }
+  function m(a) {
+    return !isNaN(parseFloat(a)) && isFinite(a) && a.constructor !== Array
+  }
+  function n(a, b, c) {
+    var d = b.url,
+    e = b.header,
+    f = b.data,
+    g = new XMLHttpRequest;
+    g.open(a, d),
+    'GET' == a ? g.send() : 'POST' == a ? (e && e.forEach(function (a) {
+      g.setRequestHeader(a[0], a[1])
+    }), f ? (g.setRequestHeader('Content-Type', 'application/json'), g.send(JSON.stringify(f))) : g.send()) : g.send(),
+    g.onreadystatechange = function () {
+      4 == g.readyState && 200 == g.status ? c && c(g.responseText) : 200 != g.status && c && c('')
+    }
+  }
+  function o(a) {
+    var b = parseFloat(a);
+    return 0 < b && Number.isInteger(b)
+  }
+  function p(a) {
+    return new Promise(function (b) {
+      n('POST', {
+        url: t.connectURL(a)
+      }, function (a) {
+        b(a)
+      })
     })
   }
-
-  function readBlobAsArrayBuffer(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsArrayBuffer(blob);
-    return promise
-  }
-
-  function readBlobAsText(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsText(blob);
-    return promise
-  }
-
-  function readArrayBufferAsText(buf) {
-    var view = new Uint8Array(buf);
-    var chars = new Array(view.length);
-
-    for (var i = 0; i < view.length; i++) {
-      chars[i] = String.fromCharCode(view[i]);
-    }
-    return chars.join('')
-  }
-
-  function bufferClone(buf) {
-    if (buf.slice) {
-      return buf.slice(0)
-    } else {
-      var view = new Uint8Array(buf.byteLength);
-      view.set(new Uint8Array(buf));
-      return view.buffer
-    }
-  }
-
-  function Body() {
-    this.bodyUsed = false;
-
-    this._initBody = function(body) {
-      this._bodyInit = body;
-      if (!body) {
-        this._bodyText = '';
-      } else if (typeof body === 'string') {
-        this._bodyText = body;
-      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-        this._bodyBlob = body;
-      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-        this._bodyFormData = body;
-      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-        this._bodyText = body.toString();
-      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
-        this._bodyArrayBuffer = bufferClone(body.buffer);
-        // IE 10-11 can't handle a DataView body.
-        this._bodyInit = new Blob([this._bodyArrayBuffer]);
-      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
-        this._bodyArrayBuffer = bufferClone(body);
-      } else {
-        this._bodyText = body = Object.prototype.toString.call(body);
-      }
-
-      if (!this.headers.get('content-type')) {
-        if (typeof body === 'string') {
-          this.headers.set('content-type', 'text/plain;charset=UTF-8');
-        } else if (this._bodyBlob && this._bodyBlob.type) {
-          this.headers.set('content-type', this._bodyBlob.type);
-        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-        }
-      }
-    };
-
-    if (support.blob) {
-      this.blob = function() {
-        var rejected = consumed(this);
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return Promise.resolve(this._bodyBlob)
-        } else if (this._bodyArrayBuffer) {
-          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as blob')
-        } else {
-          return Promise.resolve(new Blob([this._bodyText]))
-        }
-      };
-
-      this.arrayBuffer = function() {
-        if (this._bodyArrayBuffer) {
-          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
-        } else {
-          return this.blob().then(readBlobAsArrayBuffer)
-        }
-      };
-    }
-
-    this.text = function() {
-      var rejected = consumed(this);
-      if (rejected) {
-        return rejected
-      }
-
-      if (this._bodyBlob) {
-        return readBlobAsText(this._bodyBlob)
-      } else if (this._bodyArrayBuffer) {
-        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
-      } else if (this._bodyFormData) {
-        throw new Error('could not read FormData body as text')
-      } else {
-        return Promise.resolve(this._bodyText)
-      }
-    };
-
-    if (support.formData) {
-      this.formData = function() {
-        return this.text().then(decode)
-      };
-    }
-
-    this.json = function() {
-      return this.text().then(JSON.parse)
-    };
-
-    return this
-  }
-
-  // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];
-
-  function normalizeMethod(method) {
-    var upcased = method.toUpperCase();
-    return methods.indexOf(upcased) > -1 ? upcased : method
-  }
-
-  function Request(input, options) {
-    options = options || {};
-    var body = options.body;
-
-    if (input instanceof Request) {
-      if (input.bodyUsed) {
-        throw new TypeError('Already read')
-      }
-      this.url = input.url;
-      this.credentials = input.credentials;
-      if (!options.headers) {
-        this.headers = new Headers(input.headers);
-      }
-      this.method = input.method;
-      this.mode = input.mode;
-      this.signal = input.signal;
-      if (!body && input._bodyInit != null) {
-        body = input._bodyInit;
-        input.bodyUsed = true;
-      }
-    } else {
-      this.url = String(input);
-    }
-
-    this.credentials = options.credentials || this.credentials || 'same-origin';
-    if (options.headers || !this.headers) {
-      this.headers = new Headers(options.headers);
-    }
-    this.method = normalizeMethod(options.method || this.method || 'GET');
-    this.mode = options.mode || this.mode || null;
-    this.signal = options.signal || this.signal;
-    this.referrer = null;
-
-    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
-      throw new TypeError('Body not allowed for GET or HEAD requests')
-    }
-    this._initBody(body);
-  }
-
-  Request.prototype.clone = function() {
-    return new Request(this, {body: this._bodyInit})
-  };
-
-  function decode(body) {
-    var form = new FormData();
-    body
-      .trim()
-      .split('&')
-      .forEach(function(bytes) {
-        if (bytes) {
-          var split = bytes.split('=');
-          var name = split.shift().replace(/\+/g, ' ');
-          var value = split.join('=').replace(/\+/g, ' ');
-          form.append(decodeURIComponent(name), decodeURIComponent(value));
-        }
-      });
-    return form
-  }
-
-  function parseHeaders(rawHeaders) {
-    var headers = new Headers();
-    // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
-    // https://tools.ietf.org/html/rfc7230#section-3.2
-    var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
-    preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
-      var parts = line.split(':');
-      var key = parts.shift().trim();
-      if (key) {
-        var value = parts.join(':').trim();
-        headers.append(key, value);
-      }
-    });
-    return headers
-  }
-
-  Body.call(Request.prototype);
-
-  function Response(bodyInit, options) {
-    if (!options) {
-      options = {};
-    }
-
-    this.type = 'default';
-    this.status = options.status === undefined ? 200 : options.status;
-    this.ok = this.status >= 200 && this.status < 300;
-    this.statusText = 'statusText' in options ? options.statusText : 'OK';
-    this.headers = new Headers(options.headers);
-    this.url = options.url || '';
-    this._initBody(bodyInit);
-  }
-
-  Body.call(Response.prototype);
-
-  Response.prototype.clone = function() {
-    return new Response(this._bodyInit, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: new Headers(this.headers),
-      url: this.url
+  function q(a, b, c) {
+    return new Promise(function (d) {
+      return '' === b || null == b || isNaN(b) ? '' : void n('GET', {
+        url: t.valueURL(a, b, c)
+      }, function (a) {
+        d(a)
+      })
     })
-  };
-
-  Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''});
-    response.type = 'error';
-    return response
-  };
-
-  var redirectStatuses = [301, 302, 303, 307, 308];
-
-  Response.redirect = function(url, status) {
-    if (redirectStatuses.indexOf(status) === -1) {
-      throw new RangeError('Invalid status code')
-    }
-
-    return new Response(null, {status: status, headers: {location: url}})
-  };
-
-  exports.DOMException = self.DOMException;
-  try {
-    new exports.DOMException();
-  } catch (err) {
-    exports.DOMException = function(message, name) {
-      this.message = message;
-      this.name = name;
-      var error = Error(message);
-      this.stack = error.stack;
-    };
-    exports.DOMException.prototype = Object.create(Error.prototype);
-    exports.DOMException.prototype.constructor = exports.DOMException;
   }
-
-  function fetch(input, init) {
-    return new Promise(function(resolve, reject) {
-      var request = new Request(input, init);
-
-      if (request.signal && request.signal.aborted) {
-        return reject(new exports.DOMException('Aborted', 'AbortError'))
+  function r(a, b, c, d) {
+    return new Promise(function (e) {
+      n('POST', {
+        url: t.valueURL(a, b, c),
+        data: {
+          value: d
+        }
+      }, function (a) {
+        e(a)
+      })
+    })
+  }
+  Object.defineProperty(a, '__esModule', {
+    value: !0
+  }),
+  a.default = void 0,
+  !function (a) {
+    function b(a, b, c, e) {
+      var f = b && k(b.prototype, d) ? b : d,
+      g = Object.create(f.prototype),
+      h = new o(e || [
+      ]);
+      return g._invoke = i(a, c, h),
+      g
+    }
+    function c(a, b, c) {
+      try {
+        return {
+          type: 'normal',
+          arg: a.call(b, c)
+        }
+      } catch (a) {
+        return {
+          type: 'throw',
+          arg: a
+        }
       }
-
-      var xhr = new XMLHttpRequest();
-
-      function abortXhr() {
-        xhr.abort();
+    }
+    function d() {
+    }
+    function e() {
+    }
+    function f() {
+    }
+    function g(a) {
+      [
+        'next',
+        'throw',
+        'return'
+      ].forEach(function (b) {
+        a[b] = function (a) {
+          return this._invoke(b, a)
+        }
+      })
+    }
+    function h(a) {
+      function b(d, e, f, g) {
+        var h = c(a[d], a, e);
+        if ('throw' === h.type) g(h.arg);
+         else {
+          var i = h.arg,
+          j = i.value;
+          return j && 'object' === l(j) && s.call(j, '__await') ? Promise.resolve(j.__await).then(function (a) {
+            b('next', a, f, g)
+          }, function (a) {
+            b('throw', a, f, g)
+          }) : Promise.resolve(j).then(function (a) {
+            i.value = a,
+            f(i)
+          }, function (a) {
+            return b('throw', a, f, g)
+          })
+        }
       }
-
-      xhr.onload = function() {
-        var options = {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
-        };
-        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
-        var body = 'response' in xhr ? xhr.response : xhr.responseText;
-        resolve(new Response(body, options));
-      };
-
-      xhr.onerror = function() {
-        reject(new TypeError('Network request failed'));
-      };
-
-      xhr.ontimeout = function() {
-        reject(new TypeError('Network request failed'));
-      };
-
-      xhr.onabort = function() {
-        reject(new exports.DOMException('Aborted', 'AbortError'));
-      };
-
-      xhr.open(request.method, request.url, true);
-
-      if (request.credentials === 'include') {
-        xhr.withCredentials = true;
-      } else if (request.credentials === 'omit') {
-        xhr.withCredentials = false;
+      function d(a, c) {
+        function d() {
+          return new Promise(function (d, e) {
+            b(a, c, d, e)
+          })
+        }
+        return e = e ? e.then(d, d) : d()
       }
-
-      if ('responseType' in xhr && support.blob) {
-        xhr.responseType = 'blob';
-      }
-
-      request.headers.forEach(function(value, name) {
-        xhr.setRequestHeader(name, value);
-      });
-
-      if (request.signal) {
-        request.signal.addEventListener('abort', abortXhr);
-
-        xhr.onreadystatechange = function() {
-          // DONE (success or failure)
-          if (xhr.readyState === 4) {
-            request.signal.removeEventListener('abort', abortXhr);
+      var e;
+      this._invoke = d
+    }
+    function i(a, b, d) {
+      var e = 'suspendedStart';
+      return function (f, g) {
+        if (e === 'executing') throw new Error('Generator is already running');
+        if ('completed' === e) {
+          if ('throw' === f) throw g;
+          return q()
+        }
+        for (d.method = f, d.arg = g; ; ) {
+          var h = d.delegate;
+          if (h) {
+            var i = j(h, d);
+            if (i) {
+              if (i === z) continue;
+              return i
+            }
           }
-        };
+          if ('next' === d.method) d.sent = d._sent = d.arg;
+           else if ('throw' === d.method) {
+            if ('suspendedStart' === e) throw e = 'completed',
+            d.arg;
+            d.dispatchException(d.arg)
+          } else 'return' === d.method && d.abrupt('return', d.arg);
+          e = 'executing';
+          var k = c(a, b, d);
+          if ('normal' === k.type) {
+            if (e = d.done ? 'completed' : 'suspendedYield', k.arg === z) continue;
+            return {
+              value: k.arg,
+              done: d.done
+            }
+          }
+          'throw' === k.type && (e = 'completed', d.method = 'throw', d.arg = k.arg)
+        }
       }
-
-      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
+    }
+    function j(a, b) {
+      var d = a.iterator[b.method];
+      if (void 0 === d) {
+        if (b.delegate = null, 'throw' === b.method) {
+          if (a.iterator.return && (b.method = 'return', b.arg = void 0, j(a, b), 'throw' === b.method)) return z;
+          b.method = 'throw',
+          b.arg = new TypeError('The iterator does not provide a \'throw\' method')
+        }
+        return z
+      }
+      var e = c(d, a.iterator, b.arg);
+      if ('throw' === e.type) return b.method = 'throw',
+      b.arg = e.arg,
+      b.delegate = null,
+      z;
+      var f = e.arg;
+      if (!f) return b.method = 'throw',
+      b.arg = new TypeError('iterator result is not an object'),
+      b.delegate = null,
+      z;
+      if (f.done) b[a.resultName] = f.value,
+      b.next = a.nextLoc,
+      'return' !== b.method && (b.method = 'next', b.arg = void 0);
+       else return f;
+      return b.delegate = null,
+      z
+    }
+    function m(a) {
+      var b = {
+        tryLoc: a[0]
+      };
+      1 in a && (b.catchLoc = a[1]),
+      2 in a && (b.finallyLoc = a[2], b.afterLoc = a[3]),
+      this.tryEntries.push(b)
+    }
+    function n(a) {
+      var b = a.completion || {
+      };
+      b.type = 'normal',
+      delete b.arg,
+      a.completion = b
+    }
+    function o(a) {
+      this.tryEntries = [
+        {
+          tryLoc: 'root'
+        }
+      ],
+      a.forEach(m, this),
+      this.reset(!0)
+    }
+    function p(a) {
+      if (a) {
+        var b = a[u];
+        if (b) return b.call(a);
+        if ('function' == typeof a.next) return a;
+        if (!isNaN(a.length)) {
+          var c = - 1,
+          d = function b() {
+            for (; ++c < a.length; ) if (s.call(a, c)) return b.value = a[c],
+            b.done = !1,
+            b;
+            return b.value = void 0,
+            b.done = !0,
+            b
+          };
+          return d.next = d
+        }
+      }
+      return {
+        next: q
+      }
+    }
+    function q() {
+      return {
+        value: void 0,
+        done: !0
+      }
+    }
+    var r = Object.prototype,
+    s = r.hasOwnProperty,
+    t = 'function' == typeof Symbol ? Symbol : {
+    },
+    u = t.iterator || '@@iterator',
+    v = t.asyncIterator || '@@asyncIterator',
+    w = t.toStringTag || '@@toStringTag',
+    x = 'object' === ('undefined' == typeof module ? 'undefined' : l(module)),
+    y = a.regeneratorRuntime;
+    if (y) return void (x && (module.exports = y));
+    y = a.regeneratorRuntime = x ? module.exports || {
+    }
+     : {
+    },
+    y.wrap = b;
+    var z = {
+    },
+    A = {
+    };
+    A[u] = function () {
+      return this
+    };
+    var B = Object.getPrototypeOf,
+    C = B && B(B(p([])));
+    C && C !== r && s.call(C, u) && (A = C);
+    var D = f.prototype = d.prototype = Object.create(A);
+    e.prototype = D.constructor = f,
+    f.constructor = e,
+    f[w] = e.displayName = 'GeneratorFunction',
+    y.isGeneratorFunction = function (a) {
+      var b = 'function' == typeof a && a.constructor;
+      return !!b && (b === e || 'GeneratorFunction' === (b.displayName || b.name))
+    },
+    y.mark = function (a) {
+      return Object.setPrototypeOf ? Object.setPrototypeOf(a, f) : (a.__proto__ = f, !(w in a) && (a[w] = 'GeneratorFunction')),
+      a.prototype = Object.create(D),
+      a
+    },
+    y.awrap = function (a) {
+      return {
+        __await: a
+      }
+    },
+    g(h.prototype),
+    h.prototype[v] = function () {
+      return this
+    },
+    y.AsyncIterator = h,
+    y.async = function (a, c, d, e) {
+      var f = new h(b(a, c, d, e));
+      return y.isGeneratorFunction(c) ? f : f.next().then(function (a) {
+        return a.done ? a.value : f.next()
+      })
+    },
+    g(D),
+    D[w] = 'Generator',
+    D[u] = function () {
+      return this
+    },
+    D.toString = function () {
+      return '[object Generator]'
+    },
+    y.keys = function (a) {
+      var b = [
+      ];
+      for (var c in a) b.push(c);
+      return b.reverse(),
+      function c() {
+        for (; b.length; ) {
+          var d = b.pop();
+          if (d in a) return c.value = d,
+          c.done = !1,
+          c
+        }
+        return c.done = !0,
+        c
+      }
+    },
+    y.values = p,
+    o.prototype = {
+      constructor: o,
+      reset: function c(a) {
+        if (this.prev = 0, this.next = 0, this.sent = this._sent = void 0, this.done = !1, this.delegate = null, this.method = 'next', this.arg = void 0, this.tryEntries.forEach(n), !a) for (var b in this) 't' === b.charAt(0) && s.call(this, b) && !isNaN( + b.slice(1)) && (this[b] = void 0)
+      },
+      stop: function c() {
+        this.done = !0;
+        var a = this.tryEntries[0],
+        b = a.completion;
+        if ('throw' === b.type) throw b.arg;
+        return this.rval
+      },
+      dispatchException: function j(a) {
+        function b(b, d) {
+          return f.type = 'throw',
+          f.arg = a,
+          c.next = b,
+          d && (c.method = 'next', c.arg = void 0),
+          !!d
+        }
+        if (this.done) throw a;
+        for (var c = this, d = this.tryEntries.length - 1; 0 <= d; --d) {
+          var e = this.tryEntries[d],
+          f = e.completion;
+          if ('root' === e.tryLoc) return b('end');
+          if (e.tryLoc <= this.prev) {
+            var g = s.call(e, 'catchLoc'),
+            h = s.call(e, 'finallyLoc');
+            if (g && h) {
+              if (this.prev < e.catchLoc) return b(e.catchLoc, !0);
+              if (this.prev < e.finallyLoc) return b(e.finallyLoc)
+            } else if (g) {
+              if (this.prev < e.catchLoc) return b(e.catchLoc, !0);
+            } else if (!h) throw new Error('try statement without catch or finally');
+             else if (this.prev < e.finallyLoc) return b(e.finallyLoc)
+          }
+        }
+      },
+      abrupt: function g(a, b) {
+        for (var c, d = this.tryEntries.length - 1; 0 <= d; --d) if (c = this.tryEntries[d], c.tryLoc <= this.prev && s.call(c, 'finallyLoc') && this.prev < c.finallyLoc) {
+          var e = c;
+          break
+        }
+        e && ('break' === a || 'continue' === a) && e.tryLoc <= b && b <= e.finallyLoc && (e = null);
+        var f = e ? e.completion : {
+        };
+        return f.type = a,
+        f.arg = b,
+        e ? (this.method = 'next', this.next = e.finallyLoc, z) : this.complete(f)
+      },
+      complete: function c(a, b) {
+        if ('throw' === a.type) throw a.arg;
+        return 'break' === a.type || 'continue' === a.type ? this.next = a.arg : 'return' === a.type ? (this.rval = this.arg = a.arg, this.method = 'return', this.next = 'end') : 'normal' === a.type && b && (this.next = b),
+        z
+      },
+      finish: function d(a) {
+        for (var b, c = this.tryEntries.length - 1; 0 <= c; --c) if (b = this.tryEntries[c], b.finallyLoc === a) return this.complete(b.completion, b.afterLoc),
+        n(b),
+        z
+      },
+      catch : function f(a) {
+        for (var b, c = this.tryEntries.length - 1; 0 <= c; --c) if (b = this.tryEntries[c], b.tryLoc === a) {
+          var d = b.completion;
+          if ('throw' === d.type) {
+            var e = d.arg;
+            n(b)
+          }
+          return e
+        }
+        throw new Error('illegal catch attempt')
+      },
+      delegateYield: function d(a, b, c) {
+        return this.delegate = {
+          iterator: p(a),
+          resultName: b,
+          nextLoc: c
+        },
+        'next' === this.method && (this.arg = void 0),
+        z
+      }
+    }
+  }(function () {
+    return this || 'object' === ('undefined' == typeof self ? 'undefined' : l(self)) && self
+  }() || Function('return this') ());
+  var s = 52,
+  t = {
+    connectURL: function b(a) {
+      return 'https://msservice.mblock.cc/api/v1/spreadsheets/'.concat(a, '/').concat(1000, '/').concat(s, '/append')
+    },
+    valueURL: function d(a, b, c) {
+      return 'https://msservice.mblock.cc/api/v1/spreadsheets/'.concat(a, '/').concat(c, '/').concat(b, '/value')
+    }
+  },
+  u = null,
+  v = function (a) {
+    return new Promise(function (b) {
+      return setTimeout(function () {
+        return b()
+      }, a)
     })
-  }
-
-  fetch.polyfill = true;
-
-  if (!self.fetch) {
-    self.fetch = fetch;
-    self.Headers = Headers;
-    self.Request = Request;
-    self.Response = Response;
-  }
-
-  exports.Headers = Headers;
-  exports.Request = Request;
-  exports.Response = Response;
-  exports.fetch = fetch;
-
-  Object.defineProperty(exports, '__esModule', { value: true });
-
-})));
+  },
+  w = function () {
+    var a = j(regeneratorRuntime.mark(function a(b, c, d) {
+      var e,
+      f;
+      return regeneratorRuntime.wrap(function (a) {
+        for (; ; ) switch (a.prev = a.next) {
+          case 0:
+            return e = void 0,
+            f = u.getService('system.ui'),
+            a.next = 4,
+            f.message(b, c, d);
+          case 4:
+            return a.abrupt('return', a.sent);
+          case 5:
+          case 'end':
+            return a.stop();
+        }
+      }, a)
+    }));
+    return function () {
+      return a.apply(this, arguments)
+    }
+  }(),
+  x = {
+    debug: [
+    ],
+    upload: [
+    ]
+  },
+  y = [
+  ],
+  z = function () {
+    var a = j(regeneratorRuntime.mark(function a(b, c) {
+      var d,
+      f,
+      g,
+      h,
+      i,
+      j,
+      k,
+      l,
+      m;
+      return regeneratorRuntime.wrap(function (a) {
+        for (; ; ) switch (a.prev = a.next) {
+          case 0:
+            if (a.prev = 0, !(c && c.workspace)) {
+              a.next = 8;
+              break
+            }
+            return 'debug' === b ? ((d = c.workspace).enableBlocks.apply(d, e(x.upload)), (f = c.workspace).disableBlocks.apply(f, e(x.debug))) : 'upload' === b ? ((g = c.workspace).enableBlocks.apply(g, e(x.debug)), (h = c.workspace).disableBlocks.apply(h, e(x.upload))) : ((i = c.workspace).enableBlocks.apply(i, e(x.upload)), (j = c.workspace).enableBlocks.apply(j, e(x.debug))),
+            k = c.getService('account'),
+            a.next = 6,
+            k.isLogin();
+          case 6:
+            l = a.sent,
+            l || (m = c.workspace).disableBlocks.apply(m, y);
+          case 8:
+            a.next = 13;
+            break;
+          case 10:
+            a.prev = 10,
+            a.t0 = a['catch'](0);
+          case 13:
+          case 'end':
+            return a.stop();
+        }
+      }, a, null, [
+        [0,
+        10]
+      ])
+    }));
+    return function () {
+      return a.apply(this, arguments)
+    }
+  }(),
+  A = {
+    zh: {
+      googlesheet: '谷歌表格',
+      extensionName: '谷歌表格',
+      extensionDescription: '可通过 mBlock 将数据输入到谷歌表格中。\n（仅在谷歌服务区域内可用）',
+      BLOCK_1552896553516: '连接至共享表格地址 [url] ',
+      BLOCK_1552896647935: '在 [col] 列 [row] 行 输入 [value] ',
+      BLOCK_1552896647936: '读取 [col] 列 [row] 行 单元格内容',
+      cate_14037d5c: '谷歌表格',
+      connect_success: '已成功连接谷歌表格',
+      connect_fail: '连接失败，请检查网络和谷歌表格权限'
+    },
+    en: {
+      connect_success: 'Already connected to Google Sheets',
+      googlesheet: 'Google Sheets',
+      extensionName: 'Google Sheets',
+      extensionDescription: 'With this extension, you can input data into Google sheets with mBlock. (only available in Google services areas)',
+      BLOCK_1552896553516: 'connect to shared sheet [url]',
+      BLOCK_1552896647935: 'input [value] to column [col] row [row]',
+      BLOCK_1552896647936: 'read cell value at column [col] row [row]',
+      cate_14037d5c: 'Google Sheets',
+      connect_fail: 'Connection failed. Please check the network and Google sheets authority'
+    },
+    de: {
+      googlesheet: 'Google Sheets',
+      extensionName: 'Google Sheets',
+      extensionDescription: 'Mit dieser Erweiterung können Sie mit mBlock Daten in Google-Blätter eingeben. (Nur in den Bereichen der Google-Dienste verfügbar)',
+      BLOCK_1552896553516: 'Verbindung zum gemeinsamen Blatt [url]',
+      BLOCK_1552896647935: 'eingabe [value] In Kolumne [col] Zeile [row]',
+      BLOCK_1552896647936: 'Zellwert bei Spalte [col] Zeile [row]',
+      cate_14037d5c: 'Google Sheets',
+      connect_success: 'Bereits mit Google-Blättern verbunden',
+      connect_fail: 'Anschluss gescheitert. Bitte überprüfen Sie das Netzwerk und die Google-Blattenbehörde'
+    },
+    es: {
+      googlesheet: 'Google Sheets (hojas de cálculo)',
+      extensionName: 'Google Sheets (hojas de cálculo)',
+      extensionDescription: 'Con esta extensión, puedes introducir datos en Google Sheets con mBlock. (Solo donde Google dé servicio.)',
+      BLOCK_1552896553516: 'conectar a la hoja compartida [url]',
+      BLOCK_1552896647935: 'guarda [value] en la columna [col], fila [row]',
+      BLOCK_1552896647936: 'lee valor en columna [col], fila [row]',
+      cate_14037d5c: 'Google Sheets (hojas de cálculo)',
+      connect_success: 'Conectado correctamente a Google Sheets',
+      connect_fail: 'Falló la conexión. Comprueba internet y la cuenta de Google'
+    },
+    fr: {
+      googlesheet: 'Google Sheets',
+      extensionName: 'Google Sheets',
+      extensionDescription: 'Grâce à cette extension, vous pouvez entrer des données dans Google Sheets avec mBlock. (uniquement disponible dans les zones de services Google)',
+      BLOCK_1552896553516: 'se connecter à la feuille partagée [url]',
+      BLOCK_1552896647935: 'entrée [value] à la colonne [col] Ligne [row]',
+      BLOCK_1552896647936: 'lire la valeur de la cellule : colonne [col], ligne [row]',
+      cate_14037d5c: 'Google Sheets',
+      connect_success: 'Déjà connecté à Google Sheets',
+      connect_fail: 'Échec de la connexion. Veuillez vérifier le réseau et l\'autorisation Google Sheets'
+    },
+    id: {
+      googlesheet: 'Google lembar',
+      extensionName: 'Google lembar',
+      extensionDescription: 'Dengan perpanjangan ini, Anda dapat memasukkan data ke Google lembaran dengan mBlock. (hanya tersedia di area-area layanan Google)',
+      BLOCK_1552896553516: 'terhubung ke lembar bersama [url]',
+      BLOCK_1552896647935: 'masukan [value] ke kolom [col] baris [row]',
+      BLOCK_1552896647936: 'membaca nilai sel kolom [col] baris [row]',
+      cate_14037d5c: 'Google lembar',
+      connect_success: 'Sudah terhubung ke Google lembar',
+      connect_fail: 'Koneksi gagal. Periksa jaringan dan Google lembar otoritas'
+    },
+    ja: {
+      googlesheet: 'Googleシート',
+      extensionName: 'Googleシート',
+      extensionDescription: 'この拡張機能を使用すると、mBlockでGoogle シートにデータを入力することができます(Googleサービスエリアでのみ利用可能)。',
+      BLOCK_1552896553516: '共有シート[url] に接続',
+      BLOCK_1552896647935: '列[col] 行[row] に[value] を入力する',
+      BLOCK_1552896647936: '列 [col] 行 [row] のセル値を読み取る',
+      cate_14037d5c: 'Googleシート',
+      connect_success: 'Googleシートに接続済み',
+      connect_fail: '接続に失敗しました。ネットワークと Google シートの権限を確認してください'
+    },
+    'ja-jph': {
+      googlesheet: 'Google シート',
+      extensionName: 'Google シート',
+      extensionDescription: 'このかくちょうきのうをしようすると、mBlock で Google シートにデータをにゅうりょくすることができます。(Google サービスエリアでのみりようかのう)',
+      BLOCK_1552896553516: 'シェアシート[url] にせつぞく',
+      BLOCK_1552896647935: 'れつ[col] ぎょう[row] に[value] をにゅうりょくする',
+      BLOCK_1552896647936: 'れつ [col] ぎょう [row] のセルちをよみとる',
+      cate_14037d5c: 'Google シート',
+      connect_success: 'Google シートにせつぞくずみ',
+      connect_fail: 'せつぞくにしっぱいしました。ネットワークと Google シートのけんげんをかくにんしてください'
+    },
+    ko: {
+      googlesheet: 'Google 스프레드시트',
+      extensionName: 'Google 스프레드시트',
+      extensionDescription: '이 확장을 사용 하면 mBlock을 사용 하 여 Google 시트에 데이터를 입력 할 수 있습니다. (Google 서비스 지역 에서만 사용 가능)',
+      BLOCK_1552896553516: '공유 시트에 연결 [url]',
+      BLOCK_1552896647935: '입력 [value] 열에 [col] 행 [row]',
+      BLOCK_1552896647936: '열에서 셀 값 읽기 [col] 행 [row]',
+      cate_14037d5c: 'Google 스프레드시트',
+      connect_success: '이미 Google 스프레드시트에 연결 됨',
+      connect_fail: '연결에 실패 했습니다. 네트워크 및 Google 스프레드시트 권한을 확인 하십시오.'
+    },
+    pl: {
+      googlesheet: 'Arkusze Google',
+      extensionName: 'Arkusze Google',
+      extensionDescription: 'Z tego rozszerzenia, można wprowadzać dane do arkuszy Google z mBlock. (dostępne tylko w obszarach usług Google)',
+      BLOCK_1552896553516: 'Łączenie z dzielonym arkuszem [url]',
+      BLOCK_1552896647935: 'wejście [value] do kolumny [col] Wiersza [row]',
+      BLOCK_1552896647936: 'odczytać wartość komórki w kolumnie [col] Wiersza [row]',
+      cate_14037d5c: 'Arkusze Google',
+      connect_success: 'Już podłączone do arkuszy Google',
+      connect_fail: 'Połączenie nie powiodło się. Sprawdź sieć i urząd arkuszy Google'
+    },
+    uk: {
+      googlesheet: 'Таблиці Google',
+      extensionName: 'Таблиці Google',
+      extensionDescription: 'З цим розширенням mBlock, ви можете зберігати дані в Google таблицях. (доступно лише в країнах з підтримкою служб Google)',
+      BLOCK_1552896553516: 'підключитися до спільної таблиці [url]',
+      BLOCK_1552896647935: 'ввести дані [value] у стовпець [col] рядок [row]',
+      BLOCK_1552896647936: 'зчитати значення клітинки в стовпці [col] рядку [row]',
+      cate_14037d5c: 'Таблиці Google',
+      connect_success: 'Вже з\'єднано з таблицями Google',
+      connect_fail: 'Не вдалося підключитися. Будь ласка, перевірте мережу і доступність сервісів Google'
+    },
+    'zh-hant': {
+      googlesheet: 'Google 表格',
+      extensionName: 'Google 表格',
+      extensionDescription: '通過此擴展, 您可以使用 mBlock 將資料輸入到 Google 工作表中。(僅適用于 Google 服務區域)',
+      BLOCK_1552896553516: '連接到共用工作表 [url]',
+      BLOCK_1552896647935: '輸入 [value] 到列 [col] 行 [row]',
+      BLOCK_1552896647936: '讀取 [col] 列 [row] 行 單元格內容',
+      cate_14037d5c: 'Google 表格',
+      connect_success: '已連接到 Google 工作表',
+      connect_fail: '連接失敗。請查看網路和 Google 表格的權限'
+    },
+    nl: {
+      googlesheet: 'Google-bladen',
+      extensionName: 'Google-bladen',
+      extensionDescription: 'Met deze extensie u gegevens invoeren in Google Sheets met mBlock. (alleen beschikbaar in Google Services-gebieden)',
+      BLOCK_1552896553516: 'verbinding maken met gedeeld blad [url]',
+      BLOCK_1552896647935: 'input [value] naar kolom [col] Rij [row]',
+      BLOCK_1552896647936: 'Lees de waarde van de cel bij kolom [col] Rij [row]',
+      cate_14037d5c: 'Google-bladen',
+      connect_success: 'Al verbonden met Google Sheets',
+      connect_fail: 'Verbinding is mislukt. Controleer de netwerk-en Google Sheets Authority'
+    },
+    it: {
+      googlesheet: 'Fogli di Google',
+      extensionName: 'Fogli di Google',
+      extensionDescription: 'Con questa estensione, è possibile inserire i dati in fogli Google con mBlock. (disponibile solo nelle aree dei servizi Google)',
+      BLOCK_1552896553516: 'connettersi al foglio condiviso [url]',
+      BLOCK_1552896647935: 'input [value] alla colonna [col] Riga [row]',
+      BLOCK_1552896647936: 'leggi il valore della cella alla colonna [col] riga [row]',
+      cate_14037d5c: 'Fogli di Google',
+      connect_success: 'Già connesso a Fogli di Google',
+      connect_fail: 'Connessione non riuscita. Controlla la rete e l\'autorità dei Fogli di Google'
+    },
+    hr: {
+      googlesheet: 'Google listovi',
+      extensionName: 'Google listovi',
+      extensionDescription: 'Pomoću ovog proširenja možete unijeti podatke u Google listove s mBlock. (dostupno samo u područjima Googleovih usluga)',
+      BLOCK_1552896553516: 'Poveži se s zajedničkim listom [url]',
+      BLOCK_1552896647935: 'ulaz [value] u stupac [col] Redak [row]',
+      BLOCK_1552896647936: 'čitanje vrijednosti ćelije u stupcu [col] Redak [row]',
+      cate_14037d5c: 'Google listovi',
+      connect_success: 'Već je povezano s Googleovim listovima',
+      connect_fail: 'Veza nije uspjela. Provjerite mrežu i Googleove ovlasti'
+    },
+    ru: {
+      googlesheet: 'Google листы',
+      extensionName: 'Google листы',
+      extensionDescription: 'С помощью этого расширения, вы можете вводить данные в Google листы с Мблокк. (доступно только в сервисных зонах Google)',
+      BLOCK_1552896553516: 'подключение к общему листу [url]',
+      BLOCK_1552896647935: 'вход [value] в столбец [col] Строки [row]',
+      BLOCK_1552896647936: 'считывание значения ячейки в столбце [col] Строки [row]',
+      cate_14037d5c: 'Google листы',
+      connect_success: 'Уже подключены к Google листы',
+      connect_fail: 'Сбой подключения. Пожалуйста, проверьте сеть и Google листы власти'
+    },
+    pt: {
+      googlesheet: 'Planilhas Google',
+      extensionName: 'Planilhas Google',
+      extensionDescription: 'Com essa extensão, você pode inserir dados em planilhas do Google com o mBlock. (disponível apenas nas áreas de serviços do Google)',
+      BLOCK_1552896553516: 'conectar-se a planilha compartilhada [url]',
+      BLOCK_1552896647935: 'entrada [value] a coluna [col] Linha [row]',
+      BLOCK_1552896647936: 'ler o valor da célula na coluna [col] Linha [row]',
+      cate_14037d5c: 'Planilhas Google',
+      connect_success: 'Já conectado ao planilhas Google',
+      connect_fail: 'Falha na conexão. Consulte a rede e a autoridade de planilhas do Google'
+    },
+    fi: {
+      googlesheet: 'Google Sheets-sivut',
+      extensionName: 'Google Sheets-sivut',
+      extensionDescription: 'Tämän laajennuksen avulla voit syöttää tietoja Google Sheets palveluun mBlockilla. (saatavilla vain Google-palveluiden alueilla)',
+      BLOCK_1552896553516: 'yhteyden muodostaminen jaettuun taulukkoon [url]',
+      BLOCK_1552896647935: 'syöttää [value] sarakkeeseen [col] Rivi [row]',
+      BLOCK_1552896647936: 'solun arvon lukeminen sarakkeessa [col] Rivi [row]',
+      cate_14037d5c: 'Google Sheets-sivu',
+      connect_success: 'On jo yhdistetty Google Sheets-ohjelmaan',
+      connect_fail: 'Yhteys epäonnistui. Tarkista verkko-ja Google-taulukoiden valtuudet'
+    },
+    tr: {
+      googlesheet: 'Google sayfa',
+      extensionName: 'Google sayfa',
+      extensionDescription: 'Bu uzantıyla, mBlock ile Google sayfalarına veri girebilirsiniz. (yalnızca Google hizmetleri alanlarında kullanılabilir)',
+      BLOCK_1552896553516: 'Paylaşılan sayfaya bağlanma [url]',
+      BLOCK_1552896647935: 'giriş [value] sütuna [col] Satır [row]',
+      BLOCK_1552896647936: 'sütunda hücre değerini okuma [col] Satır [row]',
+      cate_14037d5c: 'Google sayfa',
+      connect_success: 'Google e-tablolar \' a zaten bağlı',
+      connect_fail: 'Bağlantı başarısız oldu. Lütfen ağı ve Google sayfa yetkilisini kontrol edin'
+    },
+    tk: {
+      googlesheet: 'Google Sheets',
+      extensionName: 'Google Sheets',
+      extensionDescription: 'Şu giňeldiş bilen siz Google sheets platformasyna mBlock bilen maglumat girizip bilersiňiz. (diňe Google hyzmatlarynyň elýeterli ýerlerinde mümkindir)',
+      BLOCK_1552896553516: 'paýlaşylan [url] tablisa baglan',
+      BLOCK_1552896647935: '[col] sütünine [row] setirine [value] girizmek',
+      BLOCK_1552896647936: '[col] sütünindäki [row] setirindäki öýjügiň bahasyny okamak',
+      cate_14037d5c: 'Google Sheets',
+      connect_success: 'Google Sheets bilen eýýäm baglanan',
+      connect_fail: 'Baglanyşyk başa barmady. Tor baglanyşygyňyzy we Google sheets işjeňligini barlaň'
+    },
+    fa: {
+      googlesheet: 'صفحات گوگل',
+      extensionName: 'صفحات گوگل',
+      extensionDescription: 'با این پسوند ، شما می توانید داده ها را با mBlockبه صفحات گوگل وارد کنید. (فقط در حوزه های خدمات Google دردسترس است)',
+      BLOCK_1552896553516: 'اتصال به صفحه مشترک [url]',
+      BLOCK_1552896647935: 'ورودی [value] به ستون [col] ردیف [row]',
+      BLOCK_1552896647936: 'مقدار داده را در ستون [col] ردیف [row] بخوان',
+      cate_14037d5c: 'صفحات گوگل',
+      connect_success: 'در حال حاضر به صفحات گوگل متصل شده است',
+      connect_fail: 'اتصال انجام نشد. لطفا شبکه و دسترسی صفحات گوگل را بررسی کنید'
+    }
+  },
+  B = {
+  },
+  C = [
+  ],
+  D = {
+    onLoad: function b(a) {
+      return j(regeneratorRuntime.mark(function b() {
+        return regeneratorRuntime.wrap(function (b) {
+          for (; ; ) switch (b.prev = b.next) {
+            case 0:
+              u = a;
+            case 1:
+            case 'end':
+              return b.stop();
+          }
+        }, b)
+      })) ()
+    },
+    onUnload: function a() {
+    },
+    onConnect: function a() {
+    },
+    onDisconnect: function a() {
+    },
+    onStopAll: function a() {
+    },
+    beforeChangeUploadMode: function a() {
+      return j(regeneratorRuntime.mark(function a() {
+        return regeneratorRuntime.wrap(function (a) {
+          for (; ; ) switch (a.prev = a.next) {
+            case 0:
+              return a.abrupt('return', !0);
+            case 1:
+            case 'end':
+              return a.stop();
+          }
+        }, a)
+      })) ()
+    },
+    beforeChangeDebugMode: function a() {
+      return j(regeneratorRuntime.mark(function a() {
+        return regeneratorRuntime.wrap(function (a) {
+          for (; ; ) switch (a.prev = a.next) {
+            case 0:
+              return a.abrupt('return', !0);
+            case 1:
+            case 'end':
+              return a.stop();
+          }
+        }, a)
+      })) ()
+    },
+    afterChangeUploadMode: function c(a, b) {
+      return z('upload', a, b),
+      !0
+    },
+    afterChangeDebugMode: function c(a, b) {
+      return z('debug', a, b),
+      !0
+    },
+    onSelect: function c(a, b) {
+      setTimeout(function () {
+        z(b.isUploadMode() ? 'upload' : 'debug', a, b)
+      }, 0)
+    },
+    onUnselect: function c(a, b) {
+      z('', a, b)
+    },
+    beforeCodeUpload: function a() {
+    },
+    afterCodeUpload: function a() {
+    },
+    onRead: function a() {
+    }
+  },
+  E = function () {
+    function a() {
+      var c = this;
+      b(this, a),
+      this.checkFirmwareInForce = 'undefined' != typeof checkFirmwareInForce && checkFirmwareInForce,
+      this.funcs = {
+        block1552896553516: {
+          onRun: function () {
+            var a = j(regeneratorRuntime.mark(function a(b) {
+              var d,
+              e;
+              return regeneratorRuntime.wrap(function (a) {
+                for (; ; ) switch (a.prev = a.next) {
+                  case 0:
+                    if (b.url) {
+                      a.next = 2;
+                      break
+                    }
+                    return a.abrupt('return', w('googlesheet.connect_fail', 'warn', 2));
+                  case 2:
+                    if (a.prev = 2, c.spreadsheetId = /https:\/\/docs.google.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/.exec(b.url) [1], c.spreadsheetId) {
+                      a.next = 6;
+                      break
+                    }
+                    return a.abrupt('return', w('googlesheet.connect_fail', 'warn', 2));
+                  case 6:
+                    return a.next = 8,
+                    p(c.spreadsheetId, b.col, b.row, b.value);
+                  case 8:
+                    return d = a.sent,
+                    a.next = 11,
+                    v(200);
+                  case 11:
+                    e = JSON.parse(d),
+                    0 === e.code ? w('googlesheet.connect_success', 'success', 2) : w('googlesheet.connect_fail', 'warn', 2),
+                    a.next = 20;
+                    break;
+                  case 16:
+                    a.prev = 16,
+                    a.t0 = a['catch'](2),
+                    w('googlesheet.connect_fail', 'warn', 2);
+                  case 20:
+                  case 'end':
+                    return a.stop();
+                }
+              }, a, null, [
+                [2,
+                16]
+              ])
+            }));
+            return function b() {
+              return a.apply(this, arguments)
+            }
+          }()
+        },
+        block1552896647935: {
+          onRun: function () {
+            var a = j(regeneratorRuntime.mark(function a(b) {
+              var d,
+              e;
+              return regeneratorRuntime.wrap(function (a) {
+                for (; ; ) switch (a.prev = a.next) {
+                  case 0:
+                    if (o(b.col) && o(b.row)) {
+                      a.next = 2;
+                      break
+                    }
+                    return a.abrupt('return');
+                  case 2:
+                    if ('' !== b.value) {
+                      a.next = 4;
+                      break
+                    }
+                    return a.abrupt('return');
+                  case 4:
+                    if (!(b.col > s || 1000 < b.row)) {
+                      a.next = 6;
+                      break
+                    }
+                    return a.abrupt('return');
+                  case 6:
+                    return d = m(b.value) ? + b.value : b.value.toString(),
+                    a.next = 9,
+                    r(c.spreadsheetId, b.col, b.row, d);
+                  case 9:
+                    return e = a.sent,
+                    a.next = 12,
+                    v(200);
+                  case 12:
+                  case 13:
+                  case 'end':
+                    return a.stop();
+                }
+              }, a)
+            }));
+            return function b() {
+              return a.apply(this, arguments)
+            }
+          }()
+        },
+        block1552896647936: {
+          onRun: function () {
+            var a = j(regeneratorRuntime.mark(function a(b) {
+              var d,
+              e;
+              return regeneratorRuntime.wrap(function (a) {
+                for (; ; ) switch (a.prev = a.next) {
+                  case 0:
+                    if (o(b.col) && o(b.row)) {
+                      a.next = 2;
+                      break
+                    }
+                    return a.abrupt('return', '');
+                  case 2:
+                    if (!(b.col > s || 1000 < b.row)) {
+                      a.next = 4;
+                      break
+                    }
+                    return a.abrupt('return', '');
+                  case 4:
+                    return a.prev = 4,
+                    a.next = 7,
+                    q(c.spreadsheetId, b.col, b.row);
+                  case 7:
+                    return d = a.sent,
+                    e = JSON.parse(d),
+                    a.next = 12,
+                    v(200);
+                  case 12:
+                    return a.abrupt('return', null === e.data ? '' : e.data);
+                  case 15:
+                    return a.prev = 15,
+                    a.t0 = a['catch'](4),
+                    a.abrupt('return', '');
+                  case 18:
+                  case 'end':
+                    return a.stop();
+                }
+              }, a, null, [
+                [4,
+                15]
+              ])
+            }));
+            return function b() {
+              return a.apply(this, arguments)
+            }
+          }(),
+          onMonitor: function a() {
+          }
+        }
+      }
+    }
+    return d(a, [
+      {
+        key: 'getInfo',
+        value: function a() {
+          return {
+            id: 'googlesheet',
+            targets: [
+              'sprites'
+            ],
+            version: '0.1.5',
+            platform: [
+              'mblockpc',
+              'mblockweb'
+            ],
+            categories: [
+              {
+                name: 'cate_14037d5c',
+                colors: [
+                  '#7ED321',
+                  '#71BE1E',
+                  '#65A91A'
+                ],
+                menuIconURI: '',
+                blockIcon: {
+                  type: 'image',
+                  width: 28,
+                  height: 26,
+                  src: window.MbApi.getExtResPath('googlesheet/imgs/9fa7b2d1281c49be846a8ff7bd536b92.svg', 'googlesheet')
+                },
+                blocks: [
+                  {
+                    opcode: 'BLOCK_1552896553516',
+                    blockType: 'command',
+                    checkboxInFlyout: !1,
+                    hidden: !1,
+                    gap: 12,
+                    arguments: {
+                      url: {
+                        type: 'string',
+                        defaultValue: 'https://docs.google.com/spreadsheets'
+                      }
+                    },
+                    branchCount: 0,
+                    platform: [
+                      'mblockpc',
+                      'mblockweb'
+                    ],
+                    handler: this.funcs.block1552896553516
+                  },
+                  {
+                    opcode: 'BLOCK_1552896647935',
+                    blockType: 'command',
+                    checkboxInFlyout: !1,
+                    hidden: !1,
+                    gap: 12,
+                    arguments: {
+                      col: {
+                        type: 'number',
+                        defaultValue: 1
+                      },
+                      row: {
+                        type: 'number',
+                        defaultValue: 1
+                      },
+                      value: {
+                        type: 'string',
+                        defaultValue: '50'
+                      }
+                    },
+                    branchCount: 0,
+                    platform: [
+                      'mblockpc',
+                      'mblockweb'
+                    ],
+                    handler: this.funcs.block1552896647935
+                  },
+                  {
+                    opcode: 'BLOCK_1552896647936',
+                    blockType: 'number',
+                    checkboxInFlyout: !1,
+                    hidden: !1,
+                    gap: 12,
+                    arguments: {
+                      col: {
+                        type: 'number',
+                        defaultValue: 1
+                      },
+                      row: {
+                        type: 'number',
+                        defaultValue: 1
+                      }
+                    },
+                    branchCount: 0,
+                    platform: [
+                      'mblockpc',
+                      'mblockweb'
+                    ],
+                    handler: this.funcs.block1552896647936
+                  }
+                ],
+                menus: {
+                }
+              }
+            ],
+            generators: C,
+            translationMap: A,
+            snippets: B,
+            generatorStartBlocks: [
+            ],
+            feature: [
+            ]
+          }
+        }
+      },
+      {
+        key: 'getHandler',
+        value: function a() {
+          return 'object' === l(D) ? D : 'function' == typeof D ? new D : void 0
+        }
+      }
+    ]),
+    a
+  }();
+  a.default = E
+});
