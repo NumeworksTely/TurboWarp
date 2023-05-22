@@ -2,7 +2,7 @@
 
    // Définissez les blocs et les fonctions
 
-    var sheet_url = "https://sheetsu.com/apis/v1.0su/......"; // Replace ...... with your Sheetsu API URL
+    var sheet_url = "https://sheetsu.com/a/t/5c1128c0fa48"; // Replace ...... with your Sheetsu API URL
 
    ext._getStatus = function() {
         return {status: 2, msg: 'Ready'};
